@@ -10,7 +10,7 @@ path = "src/lib.rs"
 crate-type = ["dylib"]
 
 [dependencies]
-flate2 = "1.0"
+flate2 = { version = "1.0", features = ["zlib-ng"] }
 rustler = "0.25.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_bytes = "0.11"
