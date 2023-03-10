@@ -1,10 +1,14 @@
 use rustler::{Env, NifResult, Term};
 use serde_rustler::{from_term, to_term};
+use flate2::Compression;
+use flate2::write::GzEncoder;
+use std::io::Write;
 
 rustler::rustler_export_nifs! {
   "Elixir.Jsonrs",
   [
     ("nif_encode!", 1, encode, rustler::schedule::SchedulerFlags::DirtyCpu),
+    ("nif_encode_gzip!", 1, encode_gzip, rustler::schedule::SchedulerFlags::DirtyCpu),
     ("nif_decode!", 1, decode, rustler::schedule::SchedulerFlags::DirtyCpu),
     ("nif_encode_pretty!", 2, encode_pretty, rustler::schedule::SchedulerFlags::DirtyCpu),
   ],
@@ -20,6 +24,22 @@ fn encode<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
   ).or(Err(rustler::Error::RaiseAtom("encode_error")))?;
   // Turn the json buffer back into an Elixir binary (string) term
   to_term(env, serde_bytes::Bytes::new(&buf)).map_err(|e| e.into())
+}
+
+fn encode_gzip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+  // Buffer for serde_json's serializer to write to
+  let mut buf = Vec::new();
+  serde_transcode::transcode(
+    serde_rustler::Deserializer::from(args[0]),
+    &mut serde_json::Serializer::new(&mut buf)
+  ).or(Err(rustler::Error::RaiseAtom("encode_error")))?;
+
+  let mut e = GzEncoder::new(Vec::new(), Compression::default());
+  e.write_all(buf.as_slice());
+  let compressed_bytes = e.finish().or(Err(rustler::Error::RaiseAtom("zlib_error")))?;
+
+  // Turn the compressed bytes back into an Elixir binary (string) term
+  to_term(env, serde_bytes::Bytes::new(&compressed_bytes)).map_err(|e| e.into())
 }
 
 // Takes a term and an indentation size
