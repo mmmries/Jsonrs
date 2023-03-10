@@ -15,6 +15,9 @@ defmodule Jsonrs do
   @spec nif_encode!(term) :: String.t()
   defp nif_encode!(_input), do: :erlang.nif_error(:nif_not_loaded)
 
+  @spec nif_encode_gzip!(term) :: String.t()
+  defp nif_encode_gzip!(_input), do: :erlang.nif_error(:nif_not_loaded)
+
   @spec nif_encode_pretty!(term, non_neg_integer) :: String.t()
   defp nif_encode_pretty!(_input, _indent), do: :erlang.nif_error(:nif_not_loaded)
 
@@ -84,6 +87,15 @@ defmodule Jsonrs do
 
   defp do_encode!(input, indent) when is_integer(indent) and indent >= 0, do: nif_encode_pretty!(input, indent)
   defp do_encode!(input, _indent), do: nif_encode!(input)
+
+  def encode_gzip!(input, opts \\ []) do
+    {lean, _opts} = Keyword.pop(opts, :lean, false)
+    case lean do
+      true -> input
+      false -> Jsonrs.Encoder.encode(input)
+    end
+    |> nif_encode_gzip!()
+  end
 
   @doc """
   Parses a JSON value from `input` string.

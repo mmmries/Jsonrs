@@ -30,6 +30,13 @@ defmodule JsonrsTest do
     end
   end
 
+  describe "encode_gzip" do
+    test "simple map" do
+      assert zipped = Jsonrs.encode_gzip!(%{"foo" => 5})
+      assert :zlib.gunzip(zipped) == ~s({"foo":5})
+    end
+  end
+
   describe "decodes" do
     test "simple map" do
       assert Jsonrs.decode!(~s({"foo":5})) == %{"foo" => 5}
