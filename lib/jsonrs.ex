@@ -12,6 +12,8 @@ defmodule Jsonrs do
     targets: RustlerPrecompiled.Config.default_targets() ++ ["aarch64-unknown-linux-musl"],
     version: version
 
+  @type compression :: :gzip | :none
+
   @spec nif_encode!(term) :: String.t()
   defp nif_encode!(_input), do: :erlang.nif_error(:nif_not_loaded)
 
@@ -20,6 +22,9 @@ defmodule Jsonrs do
 
   @spec nif_encode_pretty!(term, non_neg_integer) :: String.t()
   defp nif_encode_pretty!(_input, _indent), do: :erlang.nif_error(:nif_not_loaded)
+
+  @spec nif_encode_pretty_gzip!(term, non_neg_integer) :: String.t()
+  defp nif_encode_pretty_gzip!(_input, _indent), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec nif_decode!(String.t()) :: term
   defp nif_decode!(_input), do: :erlang.nif_error(:nif_not_loaded)
@@ -76,25 +81,25 @@ defmodule Jsonrs do
   @spec encode!(term, keyword) :: String.t()
   def encode!(input, opts \\ []) do
     {lean, opts} = Keyword.pop(opts, :lean, false)
-    {indent, _opts} = Keyword.pop(opts, :pretty, -1)
+    {indent, opts} = Keyword.pop(opts, :pretty, -1)
     indent = if true == indent, do: 2, else: indent
+    {compression, _opts} = Keyword.pop(opts, :compression, :none)
+    compression = validate_compression(compression)
     case lean do
       true -> input
       false -> Jsonrs.Encoder.encode(input)
     end
-    |> do_encode!(indent)
+    |> do_encode!(indent, compression)
   end
 
-  defp do_encode!(input, indent) when is_integer(indent) and indent >= 0, do: nif_encode_pretty!(input, indent)
-  defp do_encode!(input, _indent), do: nif_encode!(input)
+  defp do_encode!(input, indent, :gzip) when is_integer(indent) and indent >= 0, do: nif_encode_pretty_gzip!(input, indent)
+  defp do_encode!(input, indent, :none) when is_integer(indent) and indent >= 0, do: nif_encode_pretty!(input, indent)
+  defp do_encode!(input, _indent, :gzip), do: nif_encode_gzip!(input)
+  defp do_encode!(input, _indent, :none), do: nif_encode!(input)
 
-  def encode_gzip!(input, opts \\ []) do
-    {lean, _opts} = Keyword.pop(opts, :lean, false)
-    case lean do
-      true -> input
-      false -> Jsonrs.Encoder.encode(input)
-    end
-    |> nif_encode_gzip!()
+  defp validate_compression(opt) when opt in [:gzip, :none], do: opt
+  defp validate_compression(compression) do
+    raise "invalid compression option #{inspect(compression)}, only gzip is currently supported"
   end
 
   @doc """
