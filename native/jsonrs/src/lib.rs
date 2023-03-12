@@ -8,7 +8,7 @@ rustler::rustler_export_nifs! {
   "Elixir.Jsonrs",
   [
     ("nif_encode!", 1, encode, rustler::schedule::SchedulerFlags::DirtyCpu),
-    ("nif_encode_gzip!", 1, encode_gzip, rustler::schedule::SchedulerFlags::DirtyCpu),
+    ("nif_encode_gzip!", 2, encode_gzip, rustler::schedule::SchedulerFlags::DirtyCpu),
     ("nif_decode!", 1, decode, rustler::schedule::SchedulerFlags::DirtyCpu),
     ("nif_encode_pretty!", 2, encode_pretty, rustler::schedule::SchedulerFlags::DirtyCpu),
     ("nif_encode_pretty_gzip!", 2, encode_pretty_gzip, rustler::schedule::SchedulerFlags::DirtyCpu),
@@ -28,9 +28,10 @@ fn encode<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 }
 
 fn encode_gzip<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+  let buffer_size: usize = from_term(args[1])?;
   // Buffer for serde_json's serializer to write to
   let encoder = GzEncoder::new(Vec::new(), Compression::default());
-  let mut buf = BufWriter::with_capacity(1_048_576, encoder);
+  let mut buf = BufWriter::with_capacity(buffer_size, encoder);
   serde_transcode::transcode(
     serde_rustler::Deserializer::from(args[0]),
     &mut serde_json::Serializer::new(&mut buf)

@@ -17,8 +17,8 @@ defmodule Jsonrs do
   @spec nif_encode!(term) :: String.t()
   defp nif_encode!(_input), do: :erlang.nif_error(:nif_not_loaded)
 
-  @spec nif_encode_gzip!(term) :: String.t()
-  defp nif_encode_gzip!(_input), do: :erlang.nif_error(:nif_not_loaded)
+  @spec nif_encode_gzip!(term, non_neg_integer()) :: String.t()
+  defp nif_encode_gzip!(_input, _buffer_size), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec nif_encode_pretty!(term, non_neg_integer) :: String.t()
   defp nif_encode_pretty!(_input, _indent), do: :erlang.nif_error(:nif_not_loaded)
@@ -92,9 +92,13 @@ defmodule Jsonrs do
     |> do_encode!(indent, compression)
   end
 
+  def encode_gzip!(term, buffer_size) do
+    nif_encode_gzip!(term, buffer_size)
+  end
+
   defp do_encode!(input, indent, :gzip) when is_integer(indent) and indent >= 0, do: nif_encode_pretty_gzip!(input, indent)
   defp do_encode!(input, indent, :none) when is_integer(indent) and indent >= 0, do: nif_encode_pretty!(input, indent)
-  defp do_encode!(input, _indent, :gzip), do: nif_encode_gzip!(input)
+  defp do_encode!(input, _indent, :gzip), do: nif_encode_gzip!(input, 1024 * 1024)
   defp do_encode!(input, _indent, :none), do: nif_encode!(input)
 
   defp validate_compression(opt) when opt in [:gzip, :none], do: opt

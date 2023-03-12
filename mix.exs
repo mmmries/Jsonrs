@@ -30,6 +30,8 @@ defmodule Jsonrs.MixProject do
     [
       {:rustler_precompiled, "~> 0.5.4"},
       {:rustler, "~> 0.25.0", optional: true},
+      {:benchee, "~> 1.0"},
+      {:benchee_html, "~> 1.0"},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
     ]
   end
