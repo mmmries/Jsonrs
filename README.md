@@ -97,3 +97,9 @@ Inherited from `serde_json`, decoding is limited to a nesting depth of 128. As p
 ## Credits
 
 Jsonrs is built on the backs of giants. It is connecting the Rust libraries [Serde_rustler](https://github.com/sunny-g/serde_rustler) and [Serde_json](https://github.com/serde-rs/json), exposing them to Elixir through [Rustler](https://github.com/rusterlium/rustler), and wrapping the NIF in an interface inspired by [Jason](https://github.com/michalmuskala/jason). Without these projects, Jsonrs probably wouldn't exist.
+
+## Benchmarks
+
+If you want to check library performance, there is a benchmark that exercises a lot of the total functionality in `bench/gzip_encoding.exs`.
+You'll want to make sure to set `FORCE_JSONRS_BUILD=true` and `MIX_ENV=bench` environment variables to ensure you are compiling an optimized version of the NIF with your latest code.
+Then run `mix run bench/gzip_encoding.exs` before and after your changes to check if things have changed.
