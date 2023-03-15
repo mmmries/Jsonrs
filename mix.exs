@@ -31,6 +31,7 @@ defmodule Jsonrs.MixProject do
       {:rustler_precompiled, "~> 0.6.1"},
       {:rustler, "~> 0.27.0", optional: true},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
+      {:benchee, "~> 1.0", only: [:dev, :test]}
     ]
   end
 
